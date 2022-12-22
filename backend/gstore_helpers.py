@@ -8,7 +8,7 @@ from rdflib import Literal
 from boot.config import Config
 from utils.gstore_connector import GstoreConnector
 
-gc = GstoreConnector(Config.ghttp_ip, Config.ghttp_port,
+gc = GstoreConnector(Config.ghttp_domain, Config.ghttp_port,
                      Config.gstore_db_user, Config.gstore_db_passwd)
 
 

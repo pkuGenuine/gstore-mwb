@@ -1,0 +1,16 @@
+version: '3.3'
+services:
+  mwb-backend:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../:/code
+    environment:
+      - MVB_DB_SERVER=gstore
+  gstore:
+    image: pkumodlab/gstore:latest
+    volumes:
+      - ../data:/data
+    command: bin/ghttp
+
