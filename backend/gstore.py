@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 from datetime import datetime
 
-from backend.gstore_helpers import select, ask, update
+from backend.gstore_helpers import select, select_x, ask, update
 from utils.general import glock, get_uuid
 from utils.namespace import MiniWeiboNamespace, RDFNamespace, literal_n3
 
@@ -58,7 +58,7 @@ def check_passwd(name_or_email: str, passwd: str) -> str:
             :passwd {passwd} .
     }}
     """
-    result = select('x', find_user_sparql)
+    result = select_x(find_user_sparql)
     print(result)
     assert len(result) == 1, 'Unexpected err, multiple match.'
     return result[0]
@@ -70,7 +70,7 @@ def get_user_info(user_uri: str) -> Dict[str, Any]:
         {user_uri} ?x ?y .
         filter(?x != {MiniWeiboNamespace.follow})
         filter(?x != {MiniWeiboNamespace.passwd})
-        filter(?x != {RDFNamespace._type})
+        filter(?x != {RDFNamespace.ty})
     }}
     """
     result = select(['x', 'y'], cond)
@@ -81,7 +81,8 @@ def get_user_info(user_uri: str) -> Dict[str, Any]:
     return result
 
 
-def modify_user_info(user_uri: str, **kwargs):
+@glock
+def modify_user_info(user_uri: str, **kwargs: Any):
     # TODO: with lock & handle failure
     # old_info = get_user_info(user_uri)
     template = f"""
@@ -123,7 +124,7 @@ def followers(user_uri: str) -> List[str]:
         ?x :follow {user_uri} .
     }}
     """
-    return select('x', sparql)
+    return select_x(sparql)
 
 
 def concerns(user_uri: str) -> List[str]:
@@ -132,7 +133,7 @@ def concerns(user_uri: str) -> List[str]:
         {user_uri} :follow ?x .
     }}
     """
-    return select('x', sparql)
+    return select_x(sparql)
 
 
 def follow(s_uri: str, t_uid: str):
@@ -160,7 +161,7 @@ def find_user(name: str) -> List[str]:
             filter regex(?y, {literal_n3(name)})
         }}
     """
-    return select('x', cond)
+    return select_x(cond)
 
 
 def get_weibo(user_uri: str) -> List[str]:
@@ -181,7 +182,7 @@ def my_weibo(user_uri: str) -> List[str]:
         {user_uri} :post ?x .
     }}
     """
-    return select('x', sparql)
+    return select_x(sparql)
 
 
 def get_weibo_info(weibo_uri: str) -> List[Any]:
@@ -200,7 +201,6 @@ def get_weibo_info(weibo_uri: str) -> List[Any]:
 
 def post_weibo(user_uri: str, message: str, topic: str = ''):
     # TODO: support topic
-    # handle escape
     wid = get_uuid()
     weibo_uri = MiniWeiboNamespace.WeiboURI(wid)
     sparql = f"""
@@ -219,4 +219,4 @@ def test_query():
     where {{
     }}
     """
-    select('x', cond)
+    select_x(cond)

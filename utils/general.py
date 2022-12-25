@@ -1,8 +1,9 @@
-from typing import Callable, Dict, List, Any
+from typing import Dict, List, Any, Protocol
 import fcntl
 from hashlib import sha256
 import random
 from datetime import datetime, timedelta
+from functools import wraps
 
 import jwt
 
@@ -28,8 +29,18 @@ def auth_sign(data: Dict[str, Any]) -> str:
     return jwt.encode(data, Config.jwt_secret, algorithm='HS256')
 
 
-def auth_verify(token: str) -> Dict[str, Any]:
+def auth_verify(token: str) -> str:
     return jwt.decode(token, key=Config.jwt_secret, algorithms=['HS256'])['user']
+
+
+class ArbitraryCallable(Protocol):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+class SupportsStr(Protocol):
+
+    def __str__(self) -> str:
+        ...
 
 
 class FLock:
@@ -37,7 +48,7 @@ class FLock:
     Add our lock explicitly
     """
 
-    def __init__(self, file_path) -> None:
+    def __init__(self, file_path: str) -> None:
         self.fd = open(file_path + '.lock', 'a')
 
     def __enter__(self):
@@ -46,11 +57,11 @@ class FLock:
     def __exit__(self, exc_type, exc_value, exc_tb):
         fcntl.flock(self.fd, fcntl.LOCK_UN)
 
-    def __call__(self, f: Callable) -> Callable:
-        def wrapper(*args, **kwargs):
+    def __call__(self, f: ArbitraryCallable) -> ArbitraryCallable:
+        @wraps(f)
+        def wrapper(*args: Any, **kwargs: Any):
             with self:
                 f(*args, **kwargs)
-        wrapper.__name__ = f.__name__
         return wrapper
 
 
@@ -71,6 +82,7 @@ def test_flock():
         func_timeout(0.5, subtest)
     except:
         print('Not RLock')
+
 
 def pagination(size: int, page: int, li: List[Any]) -> List[Any]:
     return li[(page - 1) * size: page * size]

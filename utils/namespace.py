@@ -4,6 +4,10 @@ from datetime import datetime
 
 from rdflib import Literal, URIRef
 from rdflib import RDF, RDFS
+from utils.general import SupportsStr
+
+
+Triple = Tuple[SupportsStr, SupportsStr, SupportsStr]
 
 
 class MyURI:
@@ -42,10 +46,10 @@ class MyURI:
 
 
 class RDFNamespace:
-    Class = MyURI('Class', str(RDFS))
+    Class = MyURI('Class', str(RDFS), prefix_label='rdfs')
     Class.ty = Class
-    Property = MyURI('Property', str(RDF), Class)
-    _type = MyURI('type', str(RDF), Property)
+    Property = MyURI('Property', str(RDF), prefix_label='rdf', ty=Class)
+    ty = MyURI('type', str(RDF), prefix_label='rdf', ty=Property)
 
 
 class MiniWeiboNamespace:
@@ -82,16 +86,12 @@ class MiniWeiboNamespace:
     UserURI = partial(MyURI, prefix=USER_PREFIX, ty=User)
     WeiboURI = partial(MyURI, prefix=WEIBO_PREFIX, ty=Weibo)
 
-
     info_tuples = []
     # TODO: Add all proper & label
     info_tuples.extend(User.info_tuples)
     info_tuples.extend(Weibo.info_tuples)
     info_tuples.extend(name.info_tuples)
     info_tuples.extend(passwd.info_tuples)
-
-    def get_uid(user_uri: str) -> str:
-        return user_uri[user_uri.rfind('#') + 1: -1]
 
 
 def literal_n3(data: Any) -> str:

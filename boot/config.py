@@ -17,5 +17,5 @@ class Config:
     gstore_db_user = get_env('MWB_DB_USER', 'root')
     gstore_db_passwd = get_env('MWB_DB_PASSWD', '123456')
     ghttp_domain = get_env('MVB_DB_SERVER', 'localhost')
-    ghttp_port = get_env('MVB_DB_PORT', 9000)
+    ghttp_port = int(get_env('MVB_DB_PORT', '9000'))
     jwt_secret = get_env('MVB_JWT', 'ChangeMe')

@@ -21,7 +21,7 @@ def n3literal(data: Any) -> str:
     return Literal(data).n3()
 
 
-def query(sparql):
+def query(sparql: str) -> Dict[str, Any]:
     def replace(matchobj):
         src: str = matchobj.group(0).strip()
         v = src[src.find(':') + 1:]
@@ -56,17 +56,17 @@ def to_py(data: Dict[str, str]) -> str | int | datetime:
     raise NotImplementedError
 
 
-def select(var: str | List[str], condition: str) -> List[Any | List[Any]]:
-    var_binding = ('?' + var) if isinstance(var,
-                                            str) else ' '.join(['?' + v for v in var])
+def select(vars: List[str], condition: str) -> List[List[Any]]:
+    var_binding = ' '.join(['?' + v for v in vars])
     result = query('select ' + var_binding + '\n' + condition)
-    ret = []
-    for binding in result['results']['bindings']:
-        if isinstance(var, str):
-            ret.append(to_py(binding[var]))
-        else:
-            ret.append([to_py(binding[v]) for v in var])
-    return ret
+    return list(map(lambda binding: [to_py(binding[v]) for v in vars],
+                    result['results']['bindings']))
+
+
+def select_x(condition: str) -> List[Any]:
+    result = query('select ?x\n' + condition)
+    return list(map(lambda binding: to_py(binding['x']),
+                    result['results']['bindings']))
 
 
 def ask(sparql: str) -> bool:

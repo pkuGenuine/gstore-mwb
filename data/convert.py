@@ -1,4 +1,5 @@
-from typing import Iterable, List, Tuple, Any
+from utils.namespace import MiniWeiboNamespace, Triple
+from typing import Iterable, List, Any, Iterator
 from datetime import datetime
 import sys
 import os
@@ -7,39 +8,39 @@ import sqlparse
 from rdflib import Literal
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.namespace import MiniWeiboNamespace
 
 
 def n3literal(data: Any) -> str:
     return Literal(data).n3()
 
 
-def row2rdf(table: str, tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
+def row2rdf(table: str, tokens: Iterable[Any]) -> List[Triple]:
     d = {
         'user': user2rdf,
         'weibo': weibo2rdf,
         'userrelation': follow2rdf,
         'weiborelation': repost2rdf
     }
-    return d[table](filter(lambda x: x not in ['VALUES', '', ' ', ',', '(', ')'], map(lambda x: x.value, tokens)))
+    return d[table](filter(lambda x: x not in ['VALUES', '', ' ', ',', '(', ')'],
+                           map(lambda x: x.value, tokens)))
 
 
-def next_single(tokens: Iterable[str], literal=True) -> str:
+def next_single(tokens: Iterator[str], literal=True) -> str:
     ret = next(tokens).strip('\'')
     if literal:
         return Literal(ret).n3()
     return ret
 
 
-def next_integer(tokens: Iterable[str]) -> str:
+def next_integer(tokens: Iterator[str]) -> str:
     return n3literal(int(next(tokens)))
 
 
-def next_datetime(tokens: Iterable[str]) -> str:
+def next_datetime(tokens: Iterator[str]) -> str:
     return n3literal(datetime.strptime(next(tokens).strip('\''), '%Y-%m-%d %H:%M:%S'))
 
 
-def user2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
+def user2rdf(tokens: Iterator[str]) -> List[Triple]:
     ret = []
     uid = next_single(tokens, literal=False)
     user = MiniWeiboNamespace.UserURI(uid)
@@ -59,14 +60,15 @@ def user2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
     return ret
 
 
-def follow2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
+def follow2rdf(tokens: Iterator[str]) -> List[Triple]:
     suid = next_single(tokens, literal=False)
     tuid = next_single(tokens, literal=False)
     return [(MiniWeiboNamespace.UserURI(suid),
-            MiniWeiboNamespace.follow, MiniWeiboNamespace.UserURI(tuid))]
+             MiniWeiboNamespace.follow,
+             MiniWeiboNamespace.UserURI(tuid))]
 
 
-def weibo2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
+def weibo2rdf(tokens: Iterator[str]) -> List[Triple]:
     ret = []
     weibo_id = next_single(tokens, literal=False)
     weibo = MiniWeiboNamespace.WeiboURI(weibo_id)
@@ -84,11 +86,12 @@ def weibo2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
     return ret
 
 
-def repost2rdf(tokens: Iterable) -> List[Tuple[Any, Any, Any]]:
+def repost2rdf(tokens: Iterator[str]) -> List[Triple]:
     smid = next_single(tokens, literal=False)
     tmid = next_single(tokens, literal=False)
     return [(MiniWeiboNamespace.WeiboURI(smid),
-            MiniWeiboNamespace.repost, MiniWeiboNamespace.WeiboURI(tmid))]
+             MiniWeiboNamespace.repost,
+             MiniWeiboNamespace.WeiboURI(tmid))]
 
 
 if __name__ == '__main__':

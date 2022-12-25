@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 from django.http import HttpRequest
 from django.conf import settings
@@ -60,7 +60,8 @@ class Weibo(AuthedHandler, PaginationMixin):
     def handle_get(self, request: HttpRequest) -> Dict[str, Any]:
         return self.pagination(request, get_weibo(self.user_uir))
 
-    def map(self, weibo_uri: List[Any]) -> Dict[str, Any]:
+    def map(self, elem: str) -> Dict[str, Any]:
+        weibo_uri = elem
         (user_uri, uname, text, time) = get_weibo_info(weibo_uri)
         return {
             'uid': user_uri[user_uri.rfind('#') + 1: -1],
