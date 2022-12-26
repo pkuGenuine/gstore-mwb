@@ -6,12 +6,13 @@ from utils.general import glock, get_uuid
 from utils.namespace import MiniWeiboNamespace, RDFNamespace, literal_n3
 
 
-def create_user(name: str, passwd: str, email: str, location: str = '', gender: str = ''):
+def create_user(name: str, passwd: str, email: str, location: str = '', gender: str = '', avatar: str = ''):
     name = literal_n3(name)
     passwd = literal_n3(passwd)
     email = literal_n3(email)
     location = literal_n3(location)
     gender = literal_n3(gender)
+    avatar = literal_n3(avatar)
     literal_zero = literal_n3(0)
     ask_dup_sparql = f"""
     ask {{
@@ -35,6 +36,7 @@ def create_user(name: str, passwd: str, email: str, location: str = '', gender: 
             :email {email} ;
             :location {location} ;
             :gender {gender} ;
+            :avatar {avatar} ;
             :follower-num {literal_zero} ;
             :friend-num {literal_zero} ;
             :statues-num {literal_zero} ;
@@ -107,7 +109,7 @@ def modify_user_info(user_uri: str, **kwargs: Any):
     }}
     """
 
-    for k in ['name', 'email', 'location', 'gender']:
+    for k in ['name', 'email', 'location', 'gender', 'avatar']:
         v = kwargs.get(k, '')
         if v:
             # TODO: There are bugs in gstore, can not use update syntax...
@@ -189,12 +191,13 @@ def get_weibo_info(weibo_uri: str) -> List[Any]:
     cond = f"""
     where {{
         ?user :post {weibo_uri} ;
-            :name ?uname .
+            :name ?uname ;
+            :avatar ?uavatar ;
         {weibo_uri} :text ?content ;
             :created-at ?t .
     }}
     """
-    result = select(['user', 'uname', 'content', 't'], cond)
+    result = select(['user', 'uname', 'uavatar', 'content', 't'], cond)
     assert len(result) == 1
     return result[0]
 

@@ -94,6 +94,11 @@ class FriendFollow(AuthedHandler):
         follow(self.user_uir, data['uid'])
 
 
+class FriendUnfollow(AuthedHandler):
+    def post(self, data: Dict[str, Any]):
+        unfollow(self.user_uir, data['uid'])
+
+
 class FriendFind(AuthedHandler, PaginationMixin):
 
     def get(self, request: HttpRequest) -> Dict[str, Any]:

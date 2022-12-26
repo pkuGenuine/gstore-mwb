@@ -62,6 +62,7 @@ class MiniWeiboNamespace:
 
     __PROP = partial(MyURI, prefix=PREFIX, ty=RDFNamespace.Property)
     passwd = __PROP('passwd')
+    avatar = __PROP('avatar')
     name = __PROP('name')
     province = __PROP('province')
     city = __PROP('city')
