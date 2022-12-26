@@ -3,7 +3,7 @@ from functools import partial
 from datetime import datetime
 
 from rdflib import Literal, URIRef
-from rdflib import RDF, RDFS
+from rdflib import RDF, RDFS # type: ignore
 from utils.general import SupportsStr
 
 

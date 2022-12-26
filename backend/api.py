@@ -16,25 +16,25 @@ from backend.gstore import (
 
 
 class Test(Handler):
-    def handle_get(self, request: HttpRequest):
+    def get(self, request: HttpRequest):
         if settings.DEBUG:
             test_query()
 
 
 class Signup(Handler):
 
-    def handle_post(self, request: HttpRequest) -> Optional[Dict[str, Any]]:
-        create_user(name=request.POST['userName'], email=request.POST['email'],
-                    passwd=hash_passwd(request.POST['password']))
+    def post(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        create_user(name=data['userName'], email=data['email'],
+                    passwd=hash_passwd(data['password']))
 
 
 class Login(Handler):
 
-    def handle_post(self, request: HttpRequest) -> Optional[Dict[str, Any]]:
-        name_or_email = request.POST.get('name', '') or request.POST['email']
+    def post(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        name_or_email = data.get('name', '') or data['email']
         assert name_or_email, 'Bad login params.'
         user_uri = check_passwd(
-            name_or_email, hash_passwd(request.POST['passwd']))
+            name_or_email, hash_passwd(data['password']))
         return {
             'token': auth_sign({
                 'user': user_uri,
@@ -44,20 +44,19 @@ class Login(Handler):
 
 class UserInfo(AuthedHandler):
 
-    def handle_get(self, request: HttpRequest) -> Dict[str, Any]:
+    def get(self, request: HttpRequest) -> Dict[str, Any]:
         user_info = get_user_info(self.user_uir)
         user_info.update(userName=user_info.pop('name'))
         return user_info
 
-    def handle_post(self, request: HttpRequest):
-        new_info = {k: v for (k, v) in request.POST.items()}
-        new_info.update(name=new_info.pop('userName', ''))
-        modify_user_info(self.user_uir, **new_info)
+    def post(self, data: Dict[str, Any]):
+        data.update(name=data.pop('userName', ''))
+        modify_user_info(self.user_uir, **data)
 
 
 class Weibo(AuthedHandler, PaginationMixin):
 
-    def handle_get(self, request: HttpRequest) -> Dict[str, Any]:
+    def get(self, request: HttpRequest) -> Dict[str, Any]:
         return self.pagination(request, get_weibo(self.user_uir))
 
     def map(self, elem: str) -> Dict[str, Any]:
@@ -73,13 +72,13 @@ class Weibo(AuthedHandler, PaginationMixin):
 
 class WeiboSend(AuthedHandler):
 
-    def handle_post(self, request: HttpRequest):
-        post_weibo(self.user_uir, message=request.POST['message'])
+    def post(self, data: Dict[str, Any]):
+        post_weibo(self.user_uir, message=data['message'])
 
 
 class Friend(AuthedHandler, PaginationMixin):
 
-    def handle_get(self, request: HttpRequest) -> Dict[str, Any]:
+    def get(self, request: HttpRequest) -> Dict[str, Any]:
         if request.GET['type'] == 'followers':
             result = followers(self.user_uir)
         elif request.GET['type'] == 'concerns':
@@ -91,14 +90,15 @@ class Friend(AuthedHandler, PaginationMixin):
 
 class FriendFollow(AuthedHandler):
 
-    def handle_post(self, request: HttpRequest):
-        follow(self.user_uir, request.POST['uid'])
+    def post(self, data: Dict[str, Any]):
+        follow(self.user_uir, data['uid'])
 
 
 class FriendFind(AuthedHandler, PaginationMixin):
 
-    def handle_get(self, request: HttpRequest) -> Dict[str, Any]:
-        return self.pagination(request, find_user(name=request.GET['userName']),
+    def get(self, request: HttpRequest) -> Dict[str, Any]:
+        return self.pagination(request,
+                               find_user(name=request.GET['userName']),
                                adapt_uinfo)
 
 
@@ -113,6 +113,6 @@ def adapt_uinfo(user_uri: str) -> Dict[str, Any]:
         followersnum=len(followers(user_uri)),
         concernsnum=len(concerns(user_uri)),
         # followersnum=userinfo.pop('follower-num'),
-        # concernsnum=userinfo.pop('friend-num'), 
+        # concernsnum=userinfo.pop('friend-num'),
         weibonum=len(get_weibo(user_uri))
     )

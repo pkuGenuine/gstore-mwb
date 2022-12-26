@@ -1,8 +1,9 @@
 from typing import Dict, Any, Callable, Optional, List
+import json
+import logging
 
 from django import views
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.conf import settings
 
 from utils.general import auth_verify
 
@@ -13,33 +14,40 @@ Http400Response = HttpResponse('Bad Request', status=400)
 
 
 class Handler(views.View):
+    """
+    A simply handler which assumes:
+    1. Only support get and post
+    2. All post data are json strings
+    3. No authentication or, use header to auth
+    """
 
-    def auth(self, request: HttpRequest) -> bool:
+    def _auth(self, request: HttpRequest) -> bool:
         return True
 
-    def get(self, request: HttpRequest) -> Response:
-        return self.handle(request, self.handle_get)
-
-    def post(self, request: HttpRequest) -> Response:
-        return self.handle(request, self.handle_post)
-
-    def handle(self, request: HttpRequest, handler: Callable[[HttpRequest], None | Dict[str, Any]]) -> Response:
-        if not self.auth(request):
-            return Http401Response
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        method = request.method
         try:
-            response = handler(request)
+            if not self._auth(request):
+                return Http401Response
+            if not method or getattr(self, method.lower(), None) is None:
+                return self.http_method_not_allowed(request)
+            if method.lower() == 'get':
+                response = self.get(request)
+            elif method.lower() == 'post':
+                response = self.post(json.loads(request.body))
+            else:
+                raise NotImplementedError
             if response is None:
-                return HttpResponse("OK")
+                return HttpResponse('OK')
             return JsonResponse(response)
         except:
-            if settings.DEBUG:
-                raise
+            logging.exception('')
         return Http400Response
 
-    def handle_get(self, request: HttpRequest) -> Optional[Dict[str, Any]]:
+    def get(self, request: HttpRequest) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
-    def handle_post(self, request: HttpRequest) -> Optional[Dict[str, Any]]:
+    def post(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
 
@@ -47,9 +55,9 @@ class AuthedHandler(Handler):
 
     user_uir: str
 
-    def auth(self, request: HttpRequest) -> bool:
+    def _auth(self, request: HttpRequest) -> bool:
         self.user_uir = auth_verify(request.headers['Authorization'])
-        return True
+        return self.user_uir != ''
 
 
 class PaginationMixin():

@@ -1,11 +1,7 @@
 import os
 
-from django.conf import settings
-
 
 def get_env(env_var: str, default: str = '') -> str:
-    if not settings.DEBUG:
-        return os.environ[env_var]
     return os.environ.get(env_var, default)
 
 

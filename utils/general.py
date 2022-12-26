@@ -30,7 +30,10 @@ def auth_sign(data: Dict[str, Any]) -> str:
 
 
 def auth_verify(token: str) -> str:
-    return jwt.decode(token, key=Config.jwt_secret, algorithms=['HS256'])['user']
+    try:
+        return jwt.decode(token, key=Config.jwt_secret, algorithms=['HS256'])['user']
+    except jwt.exceptions.DecodeError:
+        return ''
 
 
 class ArbitraryCallable(Protocol):
