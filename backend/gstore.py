@@ -172,6 +172,9 @@ def get_weibo(user_uri: str) -> List[str]:
         {user_uri} :follow ?y .
         ?y :post ?x .
         ?x :created-at ?t .
+    }} union {{
+        {user_uri} :post ?x .
+        ?x :created-at ?t .
     }}
     """
     return [t[0] for t in sorted(select(['x', 't'], sparql),
