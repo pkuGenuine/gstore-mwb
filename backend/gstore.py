@@ -161,6 +161,8 @@ def find_user(name: str) -> List[str]:
         where {{
             ?x :name ?y .
             filter regex(?y, {literal_n3(name)})
+        }} union {{
+            filter regex(?x, {literal_n3(name)})
         }}
     """
     return select_x(cond)
