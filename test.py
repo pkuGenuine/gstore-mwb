@@ -56,6 +56,7 @@ def test_follow():
         response = requests.request("POST", url, headers=headers, data=data)
         print(response.text)
 
+
 def test_unfollow():
     token = login()
     url = "http://localhost:8004/api/friend/unfollow"

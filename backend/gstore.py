@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 
-from backend.gstore_helpers import select, select_x, ask, update
+from backend.gstore_helpers import select, select_x, ask, update, query, to_py
 from utils.general import glock, get_uuid, now_time
 from utils.namespace import MiniWeiboNamespace, RDFNamespace, literal_n3
 
@@ -124,6 +124,35 @@ def followers(user_uri: str) -> List[str]:
     """
     return select_x(sparql)
 
+def concerns_num(user_uri: str) -> int:
+    sparql = f"""
+    SELECT (count(?tag) as ?cnt) 
+    WHERE {{ 
+        {user_uri} :follow ?tag .
+    }} 
+    """
+    return to_py(query(sparql)['results']['bindings'][0]['cnt']) #type: ignore
+
+def follows_num(user_uri: str) -> int:
+    sparql = f"""
+    SELECT (count(?tag) as ?cnt) 
+    WHERE {{ 
+        ?tag :follow {user_uri} .
+    }} 
+    """
+    return to_py(query(sparql)['results']['bindings'][0]['cnt']) #type: ignore
+
+
+def weibo_num(user_uri: str) -> int:
+    sparql = f"""
+    SELECT (count(?tag) as ?cnt) 
+    WHERE {{ 
+        {user_uri} :post ?tag .
+    }} 
+    """
+    return to_py(query(sparql)['results']['bindings'][0]['cnt']) #type: ignore
+
+
 
 def concerns(user_uri: str) -> List[str]:
     sparql = f"""
@@ -134,7 +163,6 @@ def concerns(user_uri: str) -> List[str]:
     return select_x(sparql)
 
 
-@glock
 def follow(s_uri: str, t_uid: str):
     sparql = f"""
         insert data {{
@@ -144,7 +172,6 @@ def follow(s_uri: str, t_uid: str):
     update(sparql)
 
 
-@glock
 def unfollow(s_uri: str, t_uid: str):
     sparql = f"""
         delete data {{
