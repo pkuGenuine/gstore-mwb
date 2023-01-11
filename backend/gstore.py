@@ -52,16 +52,13 @@ def check_passwd(name_or_email: str, passwd: str) -> str:
     passwd = literal_n3(passwd)
     find_user_sparql = f"""
     where {{
-        ?x :name {name_or_email} ;
-            :passwd {passwd} .
-    }} union select ?x
-    where {{
-        ?x :email {name_or_email} ;
-            :passwd {passwd} .
+        {{ ?x :name {name_or_email} ;
+            :passwd {passwd} . }}
+        union {{ ?x :email {name_or_email} ;
+                    :passwd {passwd} . }}
     }}
     """
     result = select_x(find_user_sparql)
-    print(result)
     assert len(result) == 1, 'Unexpected err, multiple match.'
     return result[0]
 
@@ -159,10 +156,10 @@ def unfollow(s_uri: str, t_uri: str):
 def find_user(name: str) -> List[str]:
     cond = f"""
         where {{
-            ?x :name ?y .
-            filter regex(?y, {literal_n3(name)})
-        }} union {{
-            filter regex(?x, {literal_n3(name)})
+            {{ ?x :name ?y .
+                filter regex(?y, {literal_n3(name)}) . }} union 
+            {{ ?x :name ?y .
+                filter regex(str(?x), {literal_n3(name)}) }}
         }}
     """
     return select_x(cond)
@@ -170,15 +167,18 @@ def find_user(name: str) -> List[str]:
 
 def get_weibo(user_uri: str) -> List[str]:
     sparql = f"""
-    where {{
-        {user_uri} :follow ?y .
-        ?y :post ?x .
-        ?x :created-at ?t .
-    }} union {{
-        {user_uri} :post ?x .
-        ?x :created-at ?t .
+    where {{ 
+        {{
+            {user_uri} :post ?x .
+        }} union {{
+            {user_uri} :follow ?y .
+            ?y :post ?x .
+        }}
+        ?x :datetime ?t .
     }}
     """
+    # ?x :created-at ?t .
+
     return [t[0] for t in sorted(select(['x', 't'], sparql),
                                  key=lambda x: x[1], reverse=True)]
 
@@ -197,12 +197,12 @@ def get_weibo_info(weibo_uri: str) -> List[Any]:
     where {{
         ?user :post {weibo_uri} ;
             :name ?uname ;
-            :avatar ?uavatar ;
-        {weibo_uri} :text ?content ;
-            :created-at ?t .
+            :avatar ?uavatar . 
+        {weibo_uri} :text ?cont ;
+            :datetime ?t .
     }}
     """
-    result = select(['user', 'uname', 'uavatar', 'content', 't'], cond)
+    result = select(['user', 'uname', 'uavatar', 'cont', 't'], cond)
     assert len(result) == 1
     return result[0]
 
