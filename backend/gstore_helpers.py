@@ -33,9 +33,7 @@ def query(sparql: str) -> Dict[str, Any]:
             return f' <http://www.w3.org/2000/01/rdf-schema#{v}> '
     # TODO: Not that good
     sparql = re.sub(r'(rdf|rdfs)?:[a-zA-Z\-]+ ', replace, sparql) # type: ignore
-    print(sparql)
     result = json.loads(gc.query(Config.gstore_db, 'json', sparql)) # type: ignore
-    print(result)
     return result
 
 

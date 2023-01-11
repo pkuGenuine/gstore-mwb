@@ -177,7 +177,6 @@ def get_weibo(user_uri: str) -> List[str]:
         ?x :datetime ?t .
     }}
     """
-    # ?x :created-at ?t .
 
     return [t[0] for t in sorted(select(['x', 't'], sparql),
                                  key=lambda x: x[1], reverse=True)]

@@ -72,7 +72,6 @@ class Weibo(AuthedHandler, PaginationMixin):
 
 
 class WeiboSend(AuthedHandler):
-
     def post(self, data: Dict[str, Any]):
         post_weibo(self.user_uir, message=data['message'])
 
