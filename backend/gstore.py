@@ -1,8 +1,7 @@
 from typing import Dict, List, Any
-from datetime import datetime
 
 from backend.gstore_helpers import select, select_x, ask, update
-from utils.general import glock, get_uuid
+from utils.general import glock, get_uuid, now_time
 from utils.namespace import MiniWeiboNamespace, RDFNamespace, literal_n3
 
 
@@ -41,7 +40,7 @@ def create_user(name: str, passwd: str, email: str, location: str = '', gender: 
             :friend-num {literal_zero} ;
             :statues-num {literal_zero} ;
             :favourite-num {literal_zero} ;
-            :created-at {literal_n3(datetime.now())} .
+            :created-at {literal_n3(now_time())} .
     }}
     """
     update(create_user_sparql)
@@ -135,6 +134,7 @@ def concerns(user_uri: str) -> List[str]:
     return select_x(sparql)
 
 
+@glock
 def follow(s_uri: str, t_uid: str):
     sparql = f"""
         insert data {{
@@ -144,10 +144,11 @@ def follow(s_uri: str, t_uid: str):
     update(sparql)
 
 
-def unfollow(s_uri: str, t_uri: str):
+@glock
+def unfollow(s_uri: str, t_uid: str):
     sparql = f"""
         delete data {{
-            {s_uri} :follow {t_uri} .
+            {s_uri} :follow {MiniWeiboNamespace.UserURI(t_uid)} .
     }}
     """
     update(sparql)
@@ -174,7 +175,7 @@ def get_weibo(user_uri: str) -> List[str]:
             {user_uri} :follow ?y .
             ?y :post ?x .
         }}
-        ?x :datetime ?t .
+        ?x :created-at ?t .
     }}
     """
 
@@ -182,26 +183,16 @@ def get_weibo(user_uri: str) -> List[str]:
                                  key=lambda x: x[1], reverse=True)]
 
 
-def my_weibo(user_uri: str) -> List[str]:
-    sparql = f"""
-    where {{
-        {user_uri} :post ?x .
-    }}
-    """
-    return select_x(sparql)
-
-
 def get_weibo_info(weibo_uri: str) -> List[Any]:
     cond = f"""
     where {{
         ?user :post {weibo_uri} ;
-            :name ?uname ;
-            :avatar ?uavatar . 
+            :name ?uname .
         {weibo_uri} :text ?cont ;
-            :datetime ?t .
+            :created-at ?t .
     }}
     """
-    result = select(['user', 'uname', 'uavatar', 'cont', 't'], cond)
+    result = select(['user', 'uname', 'cont', 't'], cond)
     assert len(result) == 1
     return result[0]
 
@@ -214,7 +205,7 @@ def post_weibo(user_uri: str, message: str, topic: str = ''):
     insert data {{
         {weibo_uri} rdf:type :Weibo ;
             :text {literal_n3(message)} ;
-            :datetime {literal_n3(datetime.now())} .
+            :created-at {literal_n3(now_time())} .
         {user_uri} :post {weibo_uri}.
     }}
     """

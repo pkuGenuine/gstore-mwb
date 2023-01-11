@@ -3,6 +3,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 ROOT_URLCONF = 'boot.urls'
 CORS_ORIGIN_ALLOW_ALL  = True
+USE_TZ = False
 
 INSTALLED_APPS = [
     'corsheaders'

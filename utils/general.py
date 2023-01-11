@@ -24,7 +24,7 @@ def hash_passwd(passwd: str) -> str:
 
 
 def auth_sign(data: Dict[str, Any]) -> str:
-    expire = datetime.now() + timedelta(days=7)
+    expire = now_time() + timedelta(days=7)
     data.update(expire=expire.strftime('%Y-%m-%d %H:%M'))
     return jwt.encode(data, Config.jwt_secret, algorithm='HS256')
 
@@ -34,6 +34,9 @@ def auth_verify(token: str) -> str:
         return jwt.decode(token, key=Config.jwt_secret, algorithms=['HS256'])['user']
     except jwt.exceptions.DecodeError:
         return ''
+
+def now_time() -> datetime:
+    return datetime.utcnow() + timedelta(hours=8)
 
 
 class ArbitraryCallable(Protocol):

@@ -18,6 +18,7 @@ weibo_urls = [
 
 friend_urls = [
     path('follow', FriendFollow.as_view(), name='follow'),
+    path('unfollow', FriendUnfollow.as_view(), name='unfollow'),
     path('my-friends', Friend.as_view(), name='friends'),
     path('find-friends', FriendFind.as_view(), name='find friends')
 ]

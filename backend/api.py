@@ -61,11 +61,10 @@ class Weibo(AuthedHandler, PaginationMixin):
 
     def map(self, elem: str) -> Dict[str, Any]:
         weibo_uri = elem
-        (user_uri, uname, uavatar, text, time) = get_weibo_info(weibo_uri)
+        (user_uri, uname, text, time) = get_weibo_info(weibo_uri)
         return {
             'uid': user_uri[user_uri.rfind('#') + 1: -1],
             'userName': uname,
-            'avatar': uavatar,
             'message': text,
             'createTime': time.strftime('%Y-%m-%d %H:%M:%S')
         }
